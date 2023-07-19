@@ -1,0 +1,31 @@
+https://www.kdnuggets.com/2019/08/introduction-image-segmentation-k-means-clustering.html
+
+    example in c, dont understand it enough yet:
+https://github.com/pramsey/kmeans
+
+    visualisation
+http://shabal.in/visuals.html
+
+    paper
+https://www.sciencedirect.com/science/article/pii/S1877050915014143
+
+    ARTICLE - k-means++: the advantages of careful seeding
+https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf
+
+    HSV vs RGB
+https://stackoverflow.com/questions/32447729/k-means-clustering-on-rgb-or-hsv-scale
+
+    RGB to HSV formula
+https://www.rapidtables.com/convert/color/rgb-to-hsv.html
+
+    PAPER - HSV vs RGB
+http://www.cse.msu.edu/~pramanik/research/papers/2002Papers/icip.hsv.pdf
+
+    PAPER - image segmentation in HSV
+https://www.researchgate.net/publication/224345870_Fast_image_segmentation_based_on_K-Means_clustering_with_histograms_in_HSV_color_space
+
+    how to determine the optimal k
+https://medium.com/analytics-vidhya/how-to-determine-the-optimal-k-for-k-means-708505d204eb
+
+    PVE
+https://en.wikipedia.org/wiki/Explained_variation
