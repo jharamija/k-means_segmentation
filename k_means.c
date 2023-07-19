@@ -17,13 +17,14 @@
 // #define CENTR_TEST_IMG1 "imgOut1.ppm"
 // #define CENTR_TEST_IMG2 "imgOut2.ppm"
 
-#define MAX_K 5
+#define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
+#define MAX_K 10
 #define NUM_OF_CLUSTERS 3
 // #define FIRST_CENTR_INIT_PX 120     // initialization pixel for the first centroid
 
 // let's just hard code it for now
-// #define FIRST_CENTR -1      // random
-#define FIRST_CENTR 1401
+#define FIRST_CENTR -1      // random
+// #define FIRST_CENTR 1401
 #define SECOND_CENTR 366850
 #define THIRD_CENTR 367499
 
@@ -47,6 +48,8 @@ typedef struct{
 int readHeader(ppmImage *image, FILE **f);
 int readBody(ppmImage *image, FILE **f);
 int writeImg(ppmImage *image);
+
+int calculateCentroids(ppmImage *image,pxColours *centroids, int k, int initFirstCentr, double *totalDistPerNumOfCentroids, const int num_of_data_points);
 
 double calcDpDistance(pxColours pixel, pxColours centroids);
 int getNextCentr(ppmImage *image, double totalDist);            // returns index of DP selected as the new centroid
@@ -161,7 +164,7 @@ int main(){
 
     srand(time(NULL));
 
-    int i, j, k, nextCentrIndex;
+    int i, k;
     double *totalDistPerNumOfCentroids = calloc(MAX_K, sizeof(double));
 
     ppmImage *image = malloc(sizeof(ppmImage));
@@ -180,52 +183,12 @@ int main(){
     int initFirstCentr = FIRST_CENTR;
 
 //  k-means++ (slightly more advanced way of choosing centroids)
-    for(k = 2; k <= MAX_K; ++k){             // starts at 2 because it's the smallest number of centroids that makes sense
+    for(k = MIN_K; k <= MAX_K; ++k){
 
         pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
-//  put everything within this loop (from this point forwards) into a separate function?
-        for(i = 0; i < k; ++i){
 
-            if(i == 0){
-
-                if(FIRST_CENTR == -1){
-                    // implement rand init
-                    initFirstCentr = rand() % num_of_data_points;
-                }
-            
-            //  manual init of first centr
-                // centroids[i].r = image->colour[initFirstCentr].r;
-                // centroids[i].g = image->colour[initFirstCentr].g;
-                // centroids[i].b = image->colour[initFirstCentr].b;
-                centroids[i] = image->colour[initFirstCentr];
-
-                for(j = 0; j < num_of_data_points; ++j){
-                    image->centr[j] = 0;        // only 1 centr exists
-
-                    image->dist[j] = calcDpDistance(image->colour[j], centroids[i]);
-                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];
-                }
-
-                // printf("%lf\n", totalDistPerNumOfCentroids[0]);
-            } else{
-
-            //  every following centr
-                nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);
-                // centroids[i].r = image->colour[nextCentrIndex].r;
-                // centroids[i].g = image->colour[nextCentrIndex].g;
-                // centroids[i].b = image->colour[nextCentrIndex].b;
-                centroids[i] = image->colour[nextCentrIndex];
-
-            //  reassigning data points to new closest centroid
-                totalDistPerNumOfCentroids[k - 2] = 0;
-
-                for(j = 0; j < num_of_data_points; ++j){
-                    image->centr[j] = assignCentr(image->colour[j], centroids, k);
-                    image->dist[j] = calcDpDistance(image->colour[j], centroids[ image->centr[j] ]);
-                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];
-                }
-            }
-        }
+    //  k-means++
+        calculateCentroids(image, centroids, k, initFirstCentr, totalDistPerNumOfCentroids, num_of_data_points);
 
     //  elbow method -> finding optimal k
         clustering(image, centroids, k);
@@ -248,11 +211,9 @@ int main(){
 //  final k to be used for clustering:
     k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);       // returns number of centr to be used for clustering
     
-    // printf("\t%d\n", k);
-    
-    testFunct(image, k, num_of_data_points, totalDistPerNumOfCentroids);
+    // printf("%d\n", k);
 
-    // writeImg(image);
+   testFunct(image, k, num_of_data_points, totalDistPerNumOfCentroids);
 
     fclose(f);
     free(image->colour);
@@ -340,6 +301,47 @@ int clustering(ppmImage *image, pxColours *centroids, int k){
     return 0;
 }
 
+//  k-means++ (slightly more advanced way of choosing centroids)
+int calculateCentroids(ppmImage *image,pxColours *centroids, int k, int initFirstCentr, double *totalDistPerNumOfCentroids, const int num_of_data_points){
+
+    int i, j, nextCentrIndex;
+
+    for(i = 0; i < k; ++i){
+
+            if(i == 0){
+
+            //  choosing a rand value for init of first centr
+                if(FIRST_CENTR == -1){
+                    initFirstCentr = rand() % num_of_data_points;
+                }
+            
+            //  manual init of first centr
+                centroids[i] = image->colour[initFirstCentr];
+
+                for(j = 0; j < num_of_data_points; ++j){
+                    image->centr[j] = 0;                                                // only 1 centr exists
+                    image->dist[j] = calcDpDistance(image->colour[j], centroids[i]);    // calc dist to the only centr
+                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];                // calc total dist for the first centr
+                }
+            } else{
+
+            //  every following centr
+                nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
+                centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
+                totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
+
+            //  reassigning data points to new closest centroid
+                for(j = 0; j < num_of_data_points; ++j){
+                    image->centr[j] = assignCentr(image->colour[j], centroids, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
+                    image->dist[j] = calcDpDistance(image->colour[j], centroids[ image->centr[j] ]);    // calc new distances to closest centr
+                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];                                // calc new total dist
+                }
+            }
+        }
+
+    return 0;
+}
+
 int assignCentr(pxColours pixel, pxColours *centroids, int k){
 
     float lowestDist = 1000.0f, tmp = 0.0f;
@@ -365,33 +367,35 @@ int assignCentr(pxColours pixel, pxColours *centroids, int k){
 
 int getNextCentr(ppmImage *image, double totalDist){
 
-    // int i;
-    // double randVal = ((double) rand() / RAND_MAX) * totalDist;
-    // double partialSum = 0.0;
     const int num_of_data_points = image->height * image->width;
+    int i;
+    double randVal = ((double) rand() / RAND_MAX) * totalDist;
+    double partialSum = 0.0;
 
-    // for(i = 0; i < num_of_data_points; ++i){     // adds distances together until random value is reached (larger distances are more likely to reach the random value)
-    //     partialSum += image->dist[i];
+//  adds distances together until random value is reached (larger distances are more likely to reach the random value) -> more consistent (and better?) results
+    for(i = 0; i < num_of_data_points; ++i){
+        partialSum += image->dist[i];
 
-    //     if(partialSum >= randVal){
-    //         return i;
-    //     }
-    // }
-
-    // return -1;
-
-    int i, retval;
-    double maxDist = 0.0;
-
-    for(i = 0; i < num_of_data_points; ++i){        // always returns the furthest DP to be the new centr -> more consistent (and better?) results
-
-        if(image->dist[i] >= maxDist){
-            maxDist = image->dist[i];
-            retval = i;
+        if(partialSum >= randVal){
+            return i;
         }
     }
 
-    return retval;
+    printf("ERROR: getNextCentr() -> retval -1");
+    return -1;
+
+    // int i, retval;
+    // double maxDist = 0.0;
+
+    // for(i = 0; i < num_of_data_points; ++i){        // always returns the furthest DP to be the new centr
+
+    //     if(image->dist[i] >= maxDist){
+    //         maxDist = image->dist[i];
+    //         retval = i;
+    //     }
+    // }
+
+    // return retval;
 }
 
 //  calculates distance to given cenroid
