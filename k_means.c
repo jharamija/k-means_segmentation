@@ -308,36 +308,35 @@ int calculateCentroids(ppmImage *image,pxColours *centroids, int k, int initFirs
 
     for(i = 0; i < k; ++i){
 
-            if(i == 0){
+        if(i == 0){
+        //  choosing a rand value for init of first centr
+            if(FIRST_CENTR == -1){
+                initFirstCentr = rand() % num_of_data_points;
+            }
+        
+        //  manual init of first centr
+            centroids[i] = image->colour[initFirstCentr];
 
-            //  choosing a rand value for init of first centr
-                if(FIRST_CENTR == -1){
-                    initFirstCentr = rand() % num_of_data_points;
-                }
-            
-            //  manual init of first centr
-                centroids[i] = image->colour[initFirstCentr];
+            for(j = 0; j < num_of_data_points; ++j){
+                image->centr[j] = 0;                                                // only 1 centr exists
+                image->dist[j] = calcDpDistance(image->colour[j], centroids[i]);    // calc dist to the only centr
+                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                // calc total dist for the first centr
+            }
 
-                for(j = 0; j < num_of_data_points; ++j){
-                    image->centr[j] = 0;                                                // only 1 centr exists
-                    image->dist[j] = calcDpDistance(image->colour[j], centroids[i]);    // calc dist to the only centr
-                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];                // calc total dist for the first centr
-                }
-            } else{
+        } else{
+        //  every following centr
+            nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
+            centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
+            totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
 
-            //  every following centr
-                nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
-                centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
-                totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
-
-            //  reassigning data points to new closest centroid
-                for(j = 0; j < num_of_data_points; ++j){
-                    image->centr[j] = assignCentr(image->colour[j], centroids, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
-                    image->dist[j] = calcDpDistance(image->colour[j], centroids[ image->centr[j] ]);    // calc new distances to closest centr
-                    totalDistPerNumOfCentroids[k - 2] += image->dist[j];                                // calc new total dist
-                }
+        //  reassigning data points to new closest centroid
+            for(j = 0; j < num_of_data_points; ++j){
+                image->centr[j] = assignCentr(image->colour[j], centroids, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
+                image->dist[j] = calcDpDistance(image->colour[j], centroids[ image->centr[j] ]);    // calc new distances to closest centr
+                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                                // calc new total dist
             }
         }
+    }
 
     return 0;
 }
