@@ -8,14 +8,14 @@
 #define LINESIZE 20
 
 #define FILENAME "beach.ppm"
-#define NEW_IMG "test.ppm"
-#define CENTR_TEST_IMG1 "centroids1.ppm"
-#define CENTR_TEST_IMG2 "centroids2.ppm"
+#define NEW_IMG "HSVtest.ppm"
+#define CENTR_TEST_IMG1 "HSVcentroids1.ppm"
+#define CENTR_TEST_IMG2 "HSVcentroids2.ppm"
 
 // #define FILENAME "img.ppm"
-// #define NEW_IMG "test1.ppm"
-// #define CENTR_TEST_IMG1 "imgOut1.ppm"
-// #define CENTR_TEST_IMG2 "imgOut2.ppm"
+// #define NEW_IMG "HSVtest1.ppm"
+// #define CENTR_TEST_IMG1 "HSVimgOut1.ppm"
+// #define CENTR_TEST_IMG2 "HSVimgOut2.ppm"
 
 #define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
@@ -117,7 +117,7 @@ int testFunct(ppmImage *image, int k, const int num_of_data_points, double *tota
 
     clustering(image, centroids, k);
 
-    writeCentroids(image, centroids, "ttest.ppm");
+    writeCentroids(image, centroids, "HSVttest.ppm");
 
     free(centroids);
 
@@ -163,7 +163,7 @@ int main(){
 
         // printf("%lf\n", totalDistPerNumOfCentroids[k - 2]);
 
-        // writeCentroids(image, centroids, "ttest.ppm");
+        // writeCentroids(image, centroids, "HSVttest.ppm");
 
         free(centroids);
 
@@ -345,26 +345,11 @@ int getNextCentr(ppmImage *image, double totalDist){
 
     printf("ERROR: getNextCentr() -> retval -1");
     return -1;
-
-    // int i, retval;
-    // double maxDist = 0.0;
-
-    // for(i = 0; i < num_of_data_points; ++i){        // always returns the furthest DP to be the new centr
-
-    //     if(image->dist[i] >= maxDist){
-    //         maxDist = image->dist[i];
-    //         retval = i;
-    //     }
-    // }
-
-    // return retval;
 }
 
 //  calculates distance to given cenroid
 //  in the first iter all pixels/DPs will be assigned to the first centroid
 //  in every following iter it will check if the new centr is closer than the previous one
-//  returns the distance to the closest centr -> old dist if the new centr is further and new dist if its closer
-
 //  ONLY RETURNS TMP, COMPARISON IS IN MAIN
 double calcDpDistance(pxColours pixel, pxColours centroids){
 
