@@ -17,9 +17,21 @@
 // #define CENTR_TEST_IMG1 "imgOut1.ppm"
 // #define CENTR_TEST_IMG2 "imgOut2.ppm"
 
-#define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
+#define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
+// #define NUM_OF_CLUSTERS 3
+// #define FIRST_CENTR_INIT_PX 120     // initialization pixel for the first centroid
+
+// let's just hard code it for now
 #define FIRST_CENTR -1      // random
+// #define FIRST_CENTR 1401
+// #define SECOND_CENTR 366850
+// #define THIRD_CENTR 367499
+
+// #define FIRST_CENTR 650
+// #define SECOND_CENTR 271000
+// #define THIRD_CENTR 272639
+// *******************************
 
 
 typedef struct {
@@ -28,7 +40,7 @@ typedef struct {
 
 typedef struct{
     int height, width, maxval, *centr;
-    double *dist;           // distance to nearest centroid
+    double *dist;    // distance to nearest centroid
     pxColours *colour;
 } ppmImage;
 
@@ -40,14 +52,77 @@ int writeImg(ppmImage *image);
 int calculateCentroids(ppmImage *image,pxColours *centroids, int k, double *totalDistPerNumOfCentroids, const int num_of_data_points);
 
 double calcDpDistance(pxColours pixel, pxColours centroids);
-int getNextCentr(ppmImage *image, double totalDist);                // returns index of DP selected as the new centroid
+int getNextCentr(ppmImage *image, double totalDist);            // returns index of DP selected as the new centroid
 int assignCentr(pxColours pixel, pxColours *centroids, int k);
 int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const int num_of_data_points);
 int clustering(ppmImage *image, pxColours *centroids, int k);
 
-int KMeans(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids);
-int writeCentroids(ppmImage *image, pxColours *centroids, char* WRITEFILE);
 
+int writeCentroids(ppmImage *image, pxColours *centroids, char* WRITEFILE){
+
+    pxColours *newPx;
+    newPx = (pxColours*) malloc(sizeof(pxColours));
+
+    FILE *fn;
+    fn = fopen(WRITEFILE, "wb");
+    
+    // write header
+    fprintf(fn, "P6\n");
+    fprintf(fn, "%d %d\n", image->width, image->height);
+    fprintf(fn, "%d\n", image->maxval);
+
+    // write body (binary)
+    for(int i = 0; i < image->width * image->height; ++i){
+
+    //  PRINTING CLUSTER COLOURS (FOR 3 CLUSTERS)
+        // if(i < 120000){
+        //     newPx->r = centroids[0].r;
+        //     newPx->g = centroids[0].g;
+        //     newPx->b = centroids[0].b;
+        // } else if(i < 240000){
+        //     newPx->r = centroids[1].r;
+        //     newPx->g = centroids[1].g;
+        //     newPx->b = centroids[1].b;
+        // } else{
+        //     newPx->r = centroids[2].r;
+        //     newPx->g = centroids[2].g;
+        //     newPx->b = centroids[2].b;
+        // }
+
+    //  PRINTING K-MEANS RESULT
+        newPx->r = centroids[ image->centr[i] ].r;
+        newPx->g = centroids[ image->centr[i] ].g;
+        newPx->b = centroids[ image->centr[i] ].b;
+
+    //  PRINTING ORIGINAL IMAGE
+        // newPx->r = image->colour[i].r;
+        // newPx->g = image->colour[i].g;
+        // newPx->b = image->colour[i].b;
+
+        fwrite(newPx, 3, 1, fn);
+    }
+
+    fclose(fn);
+    free(newPx);
+
+    return 0;
+}
+
+int testFunct(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
+
+    pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
+
+//  k-means++
+    calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
+
+    clustering(image, centroids, k);
+
+    writeCentroids(image, centroids, "ttest.ppm");
+
+    free(centroids);
+
+    return 0;
+}
 
 int main(){
 
@@ -66,7 +141,7 @@ int main(){
 
     const int num_of_data_points = image->height * image->width;
     image->centr = (int *) malloc(num_of_data_points * sizeof(int));
-    image->dist = (double *) calloc(num_of_data_points, sizeof(double));            // inits all distances to 0
+    image->dist = (double *) calloc(num_of_data_points, sizeof(double));        // inits all distances to 0
 
 //  k-means++ (slightly more advanced way of choosing centroids)
     for(k = MIN_K; k <= MAX_K; ++k){
@@ -86,14 +161,20 @@ int main(){
             totalDistPerNumOfCentroids[k - 2] += image->dist[i];
         }
 
+        // printf("%lf\n", totalDistPerNumOfCentroids[k - 2]);
+
+        // writeCentroids(image, centroids, "ttest.ppm");
+
         free(centroids);
 
     }
 
 //  final k to be used for clustering:
-    k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);
+    k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);       // returns number of centr to be used for clustering
+    
+    // printf("%d\n", k);
 
-    KMeans(image, k, num_of_data_points, totalDistPerNumOfCentroids);
+   testFunct(image, k, num_of_data_points, totalDistPerNumOfCentroids);
 
     fclose(f);
     free(image->colour);
@@ -104,52 +185,6 @@ int main(){
     return 0;
 }
 
-
-int writeCentroids(ppmImage *image, pxColours *centroids, char* WRITEFILE){
-
-    pxColours *newPx;
-    newPx = (pxColours*) malloc(sizeof(pxColours));
-
-    FILE *fn;
-    fn = fopen(WRITEFILE, "wb");
-
-    // write header
-    fprintf(fn, "P6\n");
-    fprintf(fn, "%d %d\n", image->width, image->height);
-    fprintf(fn, "%d\n", image->maxval);
-
-    // write body (binary)
-    for(int i = 0; i < image->width * image->height; ++i){
-
-    //  PRINTING K-MEANS RESULT
-        newPx->r = centroids[ image->centr[i] ].r;
-        newPx->g = centroids[ image->centr[i] ].g;
-        newPx->b = centroids[ image->centr[i] ].b;
-
-        fwrite(newPx, 3, 1, fn);
-    }
-
-    fclose(fn);
-    free(newPx);
-
-    return 0;
-}
-
-int KMeans(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
-
-    pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
-
-//  k-means++
-    calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
-
-    clustering(image, centroids, k);
-
-    writeCentroids(image, centroids, "RGB_k_means.ppm");
-
-    free(centroids);
-
-    return 0;
-}
 
 //  returns number of centr to be used for clustering
 int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const int num_of_data_points){
@@ -171,8 +206,9 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
 
         tmpDifference = explainedVariance[i] - explainedVariance[i - 1];
         if(tmpDifference > maxDifference){
+            // printf("%d\t%lf\t%lf\n", i, tmpDifference, maxDifference);
             maxDifference = tmpDifference;
-            retval = i + 2;                     // converting index to num of clusters
+            retval = i + 2;     // converting index to num of clusters
         }
     }
 
@@ -193,7 +229,7 @@ int clustering(ppmImage *image, pxColours *centroids, int k){
             image->centr[i] = assignCentr(image->colour[i], centroids, k);      // centroids are assigned as an int between 0 and k (NUM_OF_CLUSTERS), *centroids is an array
         }
 
-    //  finding mean values
+//      finding mean values
         convergence = 0;
 
         for(i = 0; i < k; ++i){
@@ -309,11 +345,26 @@ int getNextCentr(ppmImage *image, double totalDist){
 
     printf("ERROR: getNextCentr() -> retval -1");
     return -1;
+
+    // int i, retval;
+    // double maxDist = 0.0;
+
+    // for(i = 0; i < num_of_data_points; ++i){        // always returns the furthest DP to be the new centr
+
+    //     if(image->dist[i] >= maxDist){
+    //         maxDist = image->dist[i];
+    //         retval = i;
+    //     }
+    // }
+
+    // return retval;
 }
 
 //  calculates distance to given cenroid
-//  in the first iter all pixels/DPs will be assigned to the first centroid (before this function is called)
+//  in the first iter all pixels/DPs will be assigned to the first centroid
 //  in every following iter it will check if the new centr is closer than the previous one
+//  returns the distance to the closest centr -> old dist if the new centr is further and new dist if its closer
+
 //  ONLY RETURNS TMP, COMPARISON IS IN MAIN
 double calcDpDistance(pxColours pixel, pxColours centroids){
 
@@ -334,7 +385,7 @@ int readHeader(ppmImage *image, FILE **f){
     image->height = 0;
     image->maxval = 0;
 
-    line = (char *) malloc(LINESIZE);                   // will be reallocated by 'getline()' if needed
+    line = (char *) malloc(LINESIZE);   // will be reallocated by 'getline()' if needed
 
     do{
         getline(&line, &size, *f);
@@ -375,13 +426,13 @@ int writeImg(ppmImage *image){
 
     FILE *fn;
     fn = fopen(NEW_IMG, "wb");
-
-//  write header
+    
+    // write header
     fprintf(fn, "P6\n");
     fprintf(fn, "%d %d\n", image->width, image->height);
     fprintf(fn, "%d\n", image->maxval);
 
-//  write body (binary)
+    // write body (binary)
     for(int i = 0; i < image->width * image->height; ++i){
         newPx->r = image->colour[i].r;
         newPx->g = image->colour[i].g;
