@@ -29,3 +29,6 @@ https://medium.com/analytics-vidhya/how-to-determine-the-optimal-k-for-k-means-7
 
     PVE
 https://en.wikipedia.org/wiki/Explained_variation
+
+    RGB to HSV
+https://www.tutorialspoint.com/c-program-to-change-rgb-color-model-to-hsv-color-model
