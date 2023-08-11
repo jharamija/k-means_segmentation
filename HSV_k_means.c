@@ -167,13 +167,13 @@ int rgbToHsv(ppmImage *image, const int num_of_data_points){
         diff = cmax - cmin;
 
     //  v (value) is equal to the max value between r, g, b
-        image->colourHSV[i].v = cmax * 100;
+        image->colourHSV[i].v = cmax * 100;     // [0, 100]
 
     //  s (saturation) is equal to the difference between max and min divided by max
         if(cmax == 0){
             image->colourHSV[i].s = 0;
         } else{
-            image->colourHSV[i].s = (diff / cmax) * 100;
+            image->colourHSV[i].s = (diff / cmax) * 100;    // [0, 100]
         }
 
     //  h (hue) depends on wether the max value is r, g or b
@@ -193,7 +193,61 @@ int rgbToHsv(ppmImage *image, const int num_of_data_points){
     return 0;
 }
 
-int hsvToRgb(){
+int hsvToRgb(ppmImage *image, const int num_of_data_points){
+
+    int i;
+    double hh, sNorm, vNorm, C, X, m, rr, gg, bb;   // C - chroma, X - intermediate value
+
+    for(i = 0; i < num_of_data_points; ++i){
+
+        hh = image->colourHSV[i].h;
+    //  normalizing s, v values to [0, 1]
+        sNorm = image->colourHSV[i].s / 100;
+        vNorm = image->colourHSV[i].v / 100;
+
+        if(sNorm == 0 || hh == 0){
+            rr = vNorm * 255;
+            gg = vNorm * 255;
+            bb = vNorm * 255;
+
+        } else{
+            C = sNorm * vNorm;
+            X = C * (1 - abs( fmod( hh / 60, 2.0 )  - 1) );
+            m = vNorm - C;
+
+            if(hh < 60){
+                rr = C;
+                gg = X;
+                bb = 0;
+            } else if(hh >= 60 && hh < 120){
+                rr = X;
+                gg = C;
+                bb = 0;
+            } else if(hh >= 120 && hh < 180){
+                rr = 0;
+                gg = C;
+                bb = X;
+            } else if(hh >= 180 && hh < 240){
+                rr = 0;
+                gg = X;
+                bb = C;
+            } else if(hh >= 240 && hh < 300){
+                rr = X;
+                gg = 0;
+                bb = C;
+            } else if(hh >= 300){
+                rr = C;
+                gg = 0;
+                bb = X;
+            }
+
+            image->colour[i].r = rr + m;
+            image->colour[i].g = gg + m;
+            image->colour[i].b = bb + m;
+        }
+    }
+
+    writeImg(image);
 
     return 0;
 }
@@ -287,6 +341,8 @@ int main(){
     const int num_of_data_points = image->height * image->width;
 
     rgbToHsv(image, num_of_data_points);
+    hsvToRgb(image, num_of_data_points);
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
     image->centr = (int *) malloc(num_of_data_points * sizeof(int));

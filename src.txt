@@ -32,3 +32,6 @@ https://en.wikipedia.org/wiki/Explained_variation
 
     RGB to HSV
 https://www.tutorialspoint.com/c-program-to-change-rgb-color-model-to-hsv-color-model
+
+    HSV to RGB
+https://saturncloud.io/blog/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0255-for-both/
