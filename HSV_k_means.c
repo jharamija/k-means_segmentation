@@ -205,7 +205,7 @@ int hsvToRgb(ppmImage *image, const int num_of_data_points){
         sNorm = image->colourHSV[i].s / 100;
         vNorm = image->colourHSV[i].v / 100;
 
-        if(sNorm == 0 || hh == 0){
+        if(sNorm == 0 || hh == 0){      // edge cases (pixels in shades of grey)
             rr = vNorm * 255;
             gg = vNorm * 255;
             bb = vNorm * 255;
