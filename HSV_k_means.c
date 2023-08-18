@@ -23,8 +23,8 @@
 // #define FIRST_CENTR_INIT_PX 120     // initialization pixel for the first centroid
 
 // let's just hard code it for now
-// #define FIRST_CENTR -1      // random
-#define FIRST_CENTR 1401
+#define FIRST_CENTR -1      // random
+// #define FIRST_CENTR 1401
 // #define SECOND_CENTR 366850
 // #define THIRD_CENTR 367499
 
@@ -149,27 +149,20 @@ int rgbToHsv(ppmImage *image, const int num_of_data_points){
 
     int i;
     double cmax, cmin, diff, rNorm, gNorm, bNorm;
-    double rx, gx, bx;
+    double rr, gg, bb;
 
     for(i = 0; i < num_of_data_points; ++i){
 
     //  normalizing r, g, b values to [0, 1]
-        rx = 0;
-        gx = 0;
-        bx = 0;
-        rx += image->colour[i].r;
-        gx += image->colour[i].g;
-        bx += image->colour[i].b;
-        rNorm = rx / 255;
-        gNorm = gx / 255;
-        bNorm = bx / 255;
-
-        // printf("%f\t%f\t%f\n", image->colour[i].r, image->colour[i].g, image->colour[i].b);
-        // printf("%f\t%f\t%f\n", rNorm, gNorm, bNorm);
-
-// rNorm = 45.0 / 255;
-// gNorm = 215.0 / 255;
-// bNorm = 0.0 / 255;
+        rr = 0;
+        gg = 0;
+        bb = 0;
+        rr += image->colour[i].r;
+        gg += image->colour[i].g;
+        bb += image->colour[i].b;
+        rNorm = rr / 255;
+        gNorm = gg / 255;
+        bNorm = bb / 255;
 
     //  finding max and min r, g, b values that will be used for further calculations
         cmax = maxVal(rNorm, gNorm, bNorm);
@@ -197,8 +190,6 @@ int rgbToHsv(ppmImage *image, const int num_of_data_points){
             image->colourHSV[i].h = fmod(60 * ( (rNorm - gNorm) / diff ) + 240, 360.0);
         }
     }
-
-// printf("%d, %d, %d", image->colourHSV[100].h, image->colourHSV[100].s, image->colourHSV[100].v);
 
     return 0;
 }
@@ -272,8 +263,6 @@ int hsvToRgb(pxHSV *centroids, pxColours *centroidsRGB, int k){
             centroidsRGB[i].b = round( (bb + m) * 255 );
         }
     }
-
-    // writeImg(image);
 
     return 0;
 }
@@ -349,13 +338,13 @@ int testFunct(ppmImage *image, int k, const int num_of_data_points, double *tota
 }*/
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-double calcDpDistance(pxHSV pixel, pxHSV centroids){
+double calcDpDistance(pxHSV pixelHSV, pxHSV centroidsHSV){
 
     double tmp;
 
-    tmp = sqrt( (pixel.h - centroids.h) * (pixel.h - centroids.h) +
-                (pixel.s - centroids.s) * (pixel.s - centroids.s) +
-                (pixel.v - centroids.v) * (pixel.v - centroids.v) );
+    tmp = sqrt( (pixelHSV.h - centroidsHSV.h) * (pixelHSV.h - centroidsHSV.h) +
+                (pixelHSV.s - centroidsHSV.s) * (pixelHSV.s - centroidsHSV.s) +
+                (pixelHSV.v - centroidsHSV.v) * (pixelHSV.v - centroidsHSV.v) );
 
     return tmp;
 }
@@ -375,15 +364,15 @@ int getNextCentr(ppmImage *image, const int num_of_data_points){
     return retval;
 }
 
-int assignCentr(pxHSV pixel, pxHSV *centroids, int k){
+int assignCentr(pxHSV pixelHSV, pxHSV *centroidsHSV, int k){
 
     double lowestDist = 1000.0, tmp = 0.0;
     int i, retval = -1;
 
     for(i = 0; i < k; ++i){
-        tmp = sqrt( (pixel.h - centroids[i].h) * (pixel.h - centroids[i].h) +
-                    (pixel.s - centroids[i].s) * (pixel.s - centroids[i].s) +
-                    (pixel.v - centroids[i].v) * (pixel.v - centroids[i].v) );
+        tmp = sqrt( (pixelHSV.h - centroidsHSV[i].h) * (pixelHSV.h - centroidsHSV[i].h) +
+                    (pixelHSV.s - centroidsHSV[i].s) * (pixelHSV.s - centroidsHSV[i].s) +
+                    (pixelHSV.v - centroidsHSV[i].v) * (pixelHSV.v - centroidsHSV[i].v) );
         if(tmp < lowestDist){
             lowestDist = tmp;
             retval = i;
@@ -398,7 +387,7 @@ int assignCentr(pxHSV pixel, pxHSV *centroids, int k){
     return retval;
 }
 
-int calculateCentroids(ppmImage *image, pxHSV *centroids, int k, const int num_of_data_points){
+int calculateCentroids(ppmImage *image, pxHSV *centroidsHSV, int k, const int num_of_data_points){
 
     int i, j, nextCentrIndex, initFirstCentr;
 
@@ -413,23 +402,22 @@ int calculateCentroids(ppmImage *image, pxHSV *centroids, int k, const int num_o
             }
         
         //  manual init of first centr
-            centroids[i] = image->colourHSV[initFirstCentr];
+            centroidsHSV[i] = image->colourHSV[initFirstCentr];
 
             for(j = 0; j < num_of_data_points; ++j){
-                // printf("%f\t%f\t%f\n", image->colourHSV[j].h, image->colourHSV[j].s, image->colourHSV[j].v);
                 image->centr[j] = 0;                                                    // only 1 centr exists
-                image->dist[j] = calcDpDistance(image->colourHSV[j], centroids[i]);     // calc dist to the only centr
+                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[i]);     // calc dist to the only centr
             }
 
         } else{
         //  every following centr
-            nextCentrIndex = getNextCentr(image, num_of_data_points);    // calculates next centr based of distances between DPs and existing centroids
-            centroids[i] = image->colourHSV[nextCentrIndex];                               // assigns value to new centr
+            nextCentrIndex = getNextCentr(image, num_of_data_points);    // calculates next centr based of distances between DPs and existing centroidsHSV
+            centroidsHSV[i] = image->colourHSV[nextCentrIndex];                               // assigns value to new centr
 
         //  reassigning data points to new closest centroid
             for(j = 0; j < num_of_data_points; ++j){
-                image->centr[j] = assignCentr(image->colourHSV[j], centroids, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
-                image->dist[j] = calcDpDistance(image->colourHSV[j], centroids[ image->centr[j] ]);    // calc new distances to closest centr
+                image->centr[j] = assignCentr(image->colourHSV[j], centroidsHSV, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
+                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[ image->centr[j] ]);    // calc new distances to closest centr
             }
         }
     }
@@ -437,7 +425,7 @@ int calculateCentroids(ppmImage *image, pxHSV *centroids, int k, const int num_o
     return 0;
 }
 
-int clustering(ppmImage *image, pxHSV *centroids, int k){
+int clustering(ppmImage *image, pxHSV *centroidsHSV, int k){
 
     int i, j;
     int sumH, sumS, sumV, count, convergence;
@@ -446,7 +434,7 @@ int clustering(ppmImage *image, pxHSV *centroids, int k){
 //  calc
     for(int n = 0; n < 1000; ++n){
         for(i = 0; i < num_of_data_points; ++i){
-            image->centr[i] = assignCentr(image->colourHSV[i], centroids, k);      // centroids are assigned as an int between 0 and k (NUM_OF_CLUSTERS), *centroids is an array
+            image->centr[i] = assignCentr(image->colourHSV[i], centroidsHSV, k);      // centroidsHSV are assigned as an int between 0 and k (NUM_OF_CLUSTERS), *centroidsHSV is an array
         }
 
     //  finding mean values
@@ -467,12 +455,12 @@ int clustering(ppmImage *image, pxHSV *centroids, int k){
                 }
             }
 
-            if(centroids[i].h != ( sumH / count ) || centroids[i].s != ( sumS / count ) || centroids[i].v != ( sumV / count ))  // if there is no change conv increments -> loop breaks
+            if(centroidsHSV[i].h != ( sumH / count ) || centroidsHSV[i].s != ( sumS / count ) || centroidsHSV[i].v != ( sumV / count ))  // if there is no change conv increments -> loop breaks
                 convergence++;
 
-            centroids[i].h = sumH / count;
-            centroids[i].s = sumS / count;
-            centroids[i].v = sumV / count;
+            centroidsHSV[i].h = sumH / count;
+            centroidsHSV[i].s = sumS / count;
+            centroidsHSV[i].v = sumV / count;
         }
 
         if(convergence == 0)    // if there is no change conv increments -> loop breaks
@@ -484,18 +472,18 @@ int clustering(ppmImage *image, pxHSV *centroids, int k){
 
 int testFunct(ppmImage *image, int k, const int num_of_data_points){
 
-    pxHSV *centroids = (pxHSV*) malloc(MAX_K * sizeof(pxHSV));      // exists only within function
-    pxColours *centroidsRGB = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
+    pxHSV *centroidsHSV = (pxHSV*) malloc(MAX_K * sizeof(pxHSV));               // exists only within function
+    pxColours *centroidsRGB = (pxColours*) malloc(MAX_K * sizeof(pxColours));   // exists only within function
 
-    calculateCentroids(image, centroids, k, num_of_data_points);
+    calculateCentroids(image, centroidsHSV, k, num_of_data_points);
 
-    clustering(image, centroids, k);
+    clustering(image, centroidsHSV, k);
 
-    hsvToRgb(centroids, centroidsRGB, k);
+    hsvToRgb(centroidsHSV, centroidsRGB, k);
 
     writeCentroids(image, centroidsRGB, "HSVttest.ppm");
 
-    free(centroids);
+    free(centroidsHSV);
     free(centroidsRGB);
 
     return 0;
@@ -529,7 +517,6 @@ int main(){
 
 
 
-    // hsvToRgb(image, num_of_data_points);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
