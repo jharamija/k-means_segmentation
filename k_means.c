@@ -7,10 +7,11 @@
 
 #define LINESIZE 20
 
-#define FILENAME "beach.ppm"
-#define NEW_IMG "test.ppm"
-#define CENTR_TEST_IMG1 "centroids1.ppm"
-#define CENTR_TEST_IMG2 "centroids2.ppm"
+// #define FILENAME "beach.ppm"
+// #define NEW_IMG "test1.ppm"
+
+#define FILENAME "x0_5.ppm"
+#define NEW_IMG "RGB_x0_5.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "test1.ppm"
@@ -85,6 +86,7 @@ int main(){
             image->dist[i] = calcDpDistance(image->colour[i], centroids[ image->centr[i] ]);
             totalDistPerNumOfCentroids[k - 2] += image->dist[i];
         }
+writeCentroids(image, centroids, NEW_IMG);
 
         free(centroids);
 
@@ -144,7 +146,7 @@ int KMeans(ppmImage *image, int k, const int num_of_data_points, double *totalDi
 
     clustering(image, centroids, k);
 
-    writeCentroids(image, centroids, "RGB_k_means.ppm");
+    writeCentroids(image, centroids, NEW_IMG);
 
     free(centroids);
 
@@ -255,7 +257,6 @@ int calculateCentroids(ppmImage *image,pxColours *centroids, int k, double *tota
             nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
             centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
             totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
-    if(nextCentrIndex == -1) printf("%d\n", k);
 
         //  reassigning data points to new closest centroid
             for(j = 0; j < num_of_data_points; ++j){
@@ -288,7 +289,6 @@ int assignCentr(pxColours pixel, pxColours *centroids, int k){
         printf("Can't calculate closest centroid; retval = %d", retval);
     }
 
-
     return retval;
 }
 
@@ -316,10 +316,10 @@ int getNextCentr(ppmImage *image, double totalDist){
 
     return i;
 
-    printf("%f, %f, %f\n", randVal, partialSum, totalDist);
+    // printf("%f, %f, %f\n", randVal, partialSum, totalDist);
 
-    printf("ERROR: getNextCentr() -> retval -1\n");
-    return -1;
+    // printf("ERROR: getNextCentr() -> retval -1\n");
+    // return -1;
 }
 
 //  calculates distance to given cenroid

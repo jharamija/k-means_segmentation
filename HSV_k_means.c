@@ -7,10 +7,11 @@
 
 #define LINESIZE 20
 
-#define FILENAME "beach.ppm"
-#define NEW_IMG "HSVtest.ppm"
-#define CENTR_TEST_IMG1 "HSVcentroids1.ppm"
-#define CENTR_TEST_IMG2 "HSVcentroids2.ppm"
+// #define FILENAME "beach.ppm"
+// #define NEW_IMG "HSVtest.ppm"
+
+#define FILENAME "x0_5.ppm"
+#define NEW_IMG "HSV_x0_5.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "HSVtest1.ppm"
@@ -320,22 +321,6 @@ int writeCentroids(ppmImage *image, pxColours *centroids, char* WRITEFILE){
 
     return 0;
 }
-/*
-int testFunct(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
-
-    pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
-
-//  k-means++
-    calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
-
-    clustering(image, centroids, k);
-
-    writeCentroids(image, centroids, "HSVttest.ppm");
-
-    free(centroids);
-
-    return 0;
-}*/
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 double calcDpDistance(pxHSV pixelHSV, pxHSV centroidsHSV){
@@ -349,19 +334,33 @@ double calcDpDistance(pxHSV pixelHSV, pxHSV centroidsHSV){
     return tmp;
 }
 
-int getNextCentr(ppmImage *image, const int num_of_data_points){
+//  before (without totalDist): takes the furthest px as the new centr
+//  now (with totalDist): randomly choosing a new centr with higher chances of choosing a px thats further from the existing centroids
+int getNextCentr(ppmImage *image, const int num_of_data_points, double totalDist){
 
-    int i, retval = -1;
-    double max = 0.0;
+    // int i, retval = -1;
+    // double max = 0.0;
 
-    for(i = 0; i < num_of_data_points; ++i){
-        if(image->dist[i] > max){
-            max = image->dist[i];
-            retval = i;
-        }
+    // for(i = 0; i < num_of_data_points+1000; ++i){
+    //     if(image->dist[i] > max){
+    //         max = image->dist[i];
+    //         retval = i;
+    //     }
+    // }
+
+    // return retval;
+
+    int i = 0;
+    double randVal = ((double) rand() / RAND_MAX) * totalDist;
+    double partialSum = 0.0;
+
+    while(partialSum < randVal){
+        partialSum += image->dist[i];
+        ++i;
+        if(i == num_of_data_points) i = 0;
     }
 
-    return retval;
+    return i;
 }
 
 int assignCentr(pxHSV pixelHSV, pxHSV *centroidsHSV, int k){
@@ -387,7 +386,7 @@ int assignCentr(pxHSV pixelHSV, pxHSV *centroidsHSV, int k){
     return retval;
 }
 
-int calculateCentroids(ppmImage *image, pxHSV *centroidsHSV, int k, const int num_of_data_points){
+int calculateCentroids(ppmImage *image, pxHSV *centroidsHSV, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
 
     int i, j, nextCentrIndex, initFirstCentr;
 
@@ -396,7 +395,7 @@ int calculateCentroids(ppmImage *image, pxHSV *centroidsHSV, int k, const int nu
         if(i == 0){
         //  choosing a rand value for init of first centr
             if(FIRST_CENTR == -1){
-                initFirstCentr = rand() % num_of_data_points;
+                initFirstCentr = ( rand() / RAND_MAX ) * num_of_data_points;
             } else{
                 initFirstCentr = FIRST_CENTR;
             }
@@ -404,20 +403,23 @@ int calculateCentroids(ppmImage *image, pxHSV *centroidsHSV, int k, const int nu
         //  manual init of first centr
             centroidsHSV[i] = image->colourHSV[initFirstCentr];
 
-            for(j = 0; j < num_of_data_points; ++j){
-                image->centr[j] = 0;                                                    // only 1 centr exists
-                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[i]);     // calc dist to the only centr
+            for(j = 0; j <= num_of_data_points; ++j){
+                image->centr[j] = 0;                                                        // only 1 centr exists
+                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[i]);      // calc dist to the only centr
+                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                        // calc total dist for the first centr
             }
 
         } else{
         //  every following centr
-            nextCentrIndex = getNextCentr(image, num_of_data_points);    // calculates next centr based of distances between DPs and existing centroidsHSV
-            centroidsHSV[i] = image->colourHSV[nextCentrIndex];                               // assigns value to new centr
+            nextCentrIndex = getNextCentr(image, num_of_data_points, totalDistPerNumOfCentroids[k - 2]);        // calculates next centr based of distances between DPs and existing centroidsHSV
+            centroidsHSV[i] = image->colourHSV[nextCentrIndex];                                                 // assigns value to new centr
+            totalDistPerNumOfCentroids[k - 2] = 0;                                                              // calc total dist with the newest centr
 
         //  reassigning data points to new closest centroid
             for(j = 0; j < num_of_data_points; ++j){
-                image->centr[j] = assignCentr(image->colourHSV[j], centroidsHSV, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
-                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[ image->centr[j] ]);    // calc new distances to closest centr
+                image->centr[j] = assignCentr(image->colourHSV[j], centroidsHSV, k);                        // reassigns centr to DPs so that each DP is assigned the centr it is closest to
+                image->dist[j] = calcDpDistance(image->colourHSV[j], centroidsHSV[ image->centr[j] ]);      // calc new distances to closest centr
+                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                                        // calc new total dist
             }
         }
     }
@@ -470,18 +472,70 @@ int clustering(ppmImage *image, pxHSV *centroidsHSV, int k){
     return 0;
 }
 
-int testFunct(ppmImage *image, int k, const int num_of_data_points){
+int getWCSS(ppmImage *image, pxHSV *centroidsHSV, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
 
+    int i;
+
+//  elbow method -> finding optimal k
+    clustering(image, centroidsHSV, k);
+
+//  calculating WCSS (Within Cluster Sum of Squares) to be used for calculating the elbow point
+    totalDistPerNumOfCentroids[k - 2] = 0;
+    for(i = 0; i < num_of_data_points; ++i){
+        image->dist[i] = calcDpDistance(image->colourHSV[i], centroidsHSV[ image->centr[i] ]);
+        totalDistPerNumOfCentroids[k - 2] += image->dist[i];
+    }
+
+    return 0;
+}
+
+//  returns number of centr to be used for clustering
+int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const int num_of_data_points){
+
+    int i, retval;
+    double maxDifference = 0.0, tmpDifference = 0.0;
+
+//  find a better way of calculating the elbow point than finding the biggest slope (PVE?)
+//  totalDistPerNumOfCentroids[0] is total variance
+    double *explainedVariance = (double *) malloc(MAX_K * sizeof(double));
+
+//  calculating percentage of variance explained
+    for(i = 0; i <= MAX_K - 2; ++i){            // biggest index in totalDistPerNumOfCentroids is MAX_K - 2
+        explainedVariance[i] = ( ( totalDistPerNumOfCentroids[0] - totalDistPerNumOfCentroids[i] ) / totalDistPerNumOfCentroids[0] ) * 100;
+    }
+
+//  finding elbow point, by calculating the biggest change in PVE
+    for(i = 1; i <= MAX_K - 2; ++i){
+
+        tmpDifference = explainedVariance[i] - explainedVariance[i - 1];
+        if(tmpDifference > maxDifference){
+            maxDifference = tmpDifference;
+            retval = i + 2;                     // converting index to num of clusters
+        }
+    }
+
+    free(explainedVariance);
+
+    return retval;
+}
+
+int KMeansPP(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids, char final){
+
+//  image is transformed into HSV at this point, centroidsHSV is being used for calculations, CentroidsRGB is only used at the end to print results in RGB format
     pxHSV *centroidsHSV = (pxHSV*) malloc(MAX_K * sizeof(pxHSV));               // exists only within function
     pxColours *centroidsRGB = (pxColours*) malloc(MAX_K * sizeof(pxColours));   // exists only within function
 
-    calculateCentroids(image, centroidsHSV, k, num_of_data_points);
+    calculateCentroids(image, centroidsHSV, k, num_of_data_points, totalDistPerNumOfCentroids);
 
     clustering(image, centroidsHSV, k);
 
-    hsvToRgb(centroidsHSV, centroidsRGB, k);
+    getWCSS(image, centroidsHSV, k, num_of_data_points, totalDistPerNumOfCentroids);
+    
+    // if(final == 'y'){
+        hsvToRgb(centroidsHSV, centroidsRGB, k);
 
-    writeCentroids(image, centroidsRGB, "HSVttest.ppm");
+        writeCentroids(image, centroidsRGB, NEW_IMG);
+    // }
 
     free(centroidsHSV);
     free(centroidsRGB);
@@ -494,8 +548,8 @@ int main(){
 
     srand(time(NULL));
 
-    // int i, k;
-    // double *totalDistPerNumOfCentroids = calloc(MAX_K, sizeof(double));
+    int k;
+    double *totalDistPerNumOfCentroids = calloc(MAX_K, sizeof(double));
 
     ppmImage *image = malloc(sizeof(ppmImage));
 
@@ -512,17 +566,17 @@ int main(){
     image->centr = (int *) malloc(num_of_data_points * sizeof(int));
     image->dist = (double *) calloc(num_of_data_points, sizeof(double));        // inits all distances to 0
 
-    testFunct(image, 3, num_of_data_points);
+//  k-means++ (slightly more advanced way of choosing centroids)
+    for(k = MIN_K; k <= MAX_K; ++k){
+        KMeansPP(image, k, num_of_data_points, totalDistPerNumOfCentroids, 'n');
+    }
 
-
-
+    k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);
+    KMeansPP(image, k, num_of_data_points, totalDistPerNumOfCentroids, 'y');
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
-    image->centr = (int *) malloc(num_of_data_points * sizeof(int));
-    image->dist = (double *) calloc(num_of_data_points, sizeof(double));        // inits all distances to 0
-
 //  k-means++ (slightly more advanced way of choosing centroids)
     for(k = MIN_K; k <= MAX_K; ++k){
 
