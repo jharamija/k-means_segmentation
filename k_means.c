@@ -71,7 +71,7 @@ int main(){
 //  k-means++ (slightly more advanced way of choosing centroids)
     for(k = MIN_K; k <= MAX_K; ++k){
 
-        pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
+        pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within the loop
 
     //  k-means++
         calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
@@ -255,6 +255,7 @@ int calculateCentroids(ppmImage *image,pxColours *centroids, int k, double *tota
             nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
             centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
             totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
+    if(nextCentrIndex == -1) printf("%d\n", k);
 
         //  reassigning data points to new closest centroid
             for(j = 0; j < num_of_data_points; ++j){
@@ -294,20 +295,30 @@ int assignCentr(pxColours pixel, pxColours *centroids, int k){
 int getNextCentr(ppmImage *image, double totalDist){
 
     const int num_of_data_points = image->height * image->width;
-    int i;
+    int i = 0;
     double randVal = ((double) rand() / RAND_MAX) * totalDist;
     double partialSum = 0.0;
 
 //  adds distances together until random value is reached (larger distances are more likely to reach the random value) -> more consistent (and better?) results
-    for(i = 0; i < num_of_data_points; ++i){
-        partialSum += image->dist[i];
+    // for(i = 0; i < num_of_data_points; ++i){
+    //     partialSum += image->dist[i];
 
-        if(partialSum >= randVal){
-            return i;
-        }
+    //     if(partialSum >= randVal){
+    //         return i;
+    //     }
+    // }
+
+    while(partialSum < randVal){
+        partialSum += image->dist[i];
+        ++i;
+        if(i == num_of_data_points) i = 0;
     }
 
-    printf("ERROR: getNextCentr() -> retval -1");
+    return i;
+
+    printf("%f, %f, %f\n", randVal, partialSum, totalDist);
+
+    printf("ERROR: getNextCentr() -> retval -1\n");
     return -1;
 }
 
