@@ -10,8 +10,11 @@
 // #define FILENAME "beach.ppm"
 // #define NEW_IMG "test1.ppm"
 
-#define FILENAME "x0_5.ppm"
-#define NEW_IMG "RGB_x0_5.ppm"
+// #define FILENAME "x0_5.ppm"
+// #define NEW_IMG "RGB_x0_5.ppm"
+
+#define FILENAME "road.ppm"
+#define NEW_IMG "RGB_road.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "test1.ppm"
@@ -20,7 +23,8 @@
 
 #define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
-#define FIRST_CENTR -1      // random
+#define FIRST_CENTR -1      // if == -1 -> random
+#define K 0                 // if K < 1 -> random k
 
 
 typedef struct {
@@ -54,7 +58,7 @@ int main(){
 
     srand(time(NULL));
 
-    int i, k;
+    int i, k=0;
     double *totalDistPerNumOfCentroids = calloc(MAX_K, sizeof(double));
 
     ppmImage *image = malloc(sizeof(ppmImage));
@@ -68,32 +72,35 @@ int main(){
     const int num_of_data_points = image->height * image->width;
     image->centr = (int *) malloc(num_of_data_points * sizeof(int));
     image->dist = (double *) calloc(num_of_data_points, sizeof(double));            // inits all distances to 0
+    if(K < 1){
+    //  k-means++ (slightly more advanced way of choosing centroids)
+        for(k = MIN_K; k <= MAX_K; ++k){
+            pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within the loop
 
-//  k-means++ (slightly more advanced way of choosing centroids)
-    for(k = MIN_K; k <= MAX_K; ++k){
+        //  k-means++
+            calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
 
-        pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within the loop
+        //  elbow method -> finding optimal k
+            clustering(image, centroids, k);
 
-    //  k-means++
-        calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
-
-    //  elbow method -> finding optimal k
-        clustering(image, centroids, k);
-
-    //  calculating WCSS (Within Cluster Sum of Squares) to be used for calculating the elbow point
-        totalDistPerNumOfCentroids[k - 2] = 0;
-        for(i = 0; i < num_of_data_points; ++i){
-            image->dist[i] = calcDpDistance(image->colour[i], centroids[ image->centr[i] ]);
-            totalDistPerNumOfCentroids[k - 2] += image->dist[i];
-        }
+        //  calculating WCSS (Within Cluster Sum of Squares) to be used for calculating the elbow point
+            totalDistPerNumOfCentroids[k - MIN_K] = 0;
+            for(i = 0; i < num_of_data_points; ++i){
+                image->dist[i] = calcDpDistance(image->colour[i], centroids[ image->centr[i] ]);
+                totalDistPerNumOfCentroids[k - MIN_K] += image->dist[i];
+            }
 writeCentroids(image, centroids, NEW_IMG);
 
-        free(centroids);
+            free(centroids);
 
+        }
+
+    //  final k to be used for clustering:
+        k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);
+    } else{
+        k = K;
     }
-
-//  final k to be used for clustering:
-    k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);
+    printf("k = %d\n", k);
 
     KMeans(image, k, num_of_data_points, totalDistPerNumOfCentroids);
 
@@ -164,12 +171,12 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
     double *explainedVariance = (double *) malloc(MAX_K * sizeof(double));
 
 //  calculating percentage of variance explained
-    for(i = 0; i <= MAX_K - 2; ++i){            // biggest index in totalDistPerNumOfCentroids is MAX_K - 2
+    for(i = 0; i <= MAX_K - MIN_K; ++i){            // biggest index in totalDistPerNumOfCentroids is MAX_K - MIN_K
         explainedVariance[i] = ( ( totalDistPerNumOfCentroids[0] - totalDistPerNumOfCentroids[i] ) / totalDistPerNumOfCentroids[0] ) * 100;
     }
 
 //  finding elbow point, by calculating the biggest change in PVE
-    for(i = 1; i <= MAX_K - 2; ++i){
+    for(i = 1; i <= MAX_K - MIN_K; ++i){
 
         tmpDifference = explainedVariance[i] - explainedVariance[i - 1];
         if(tmpDifference > maxDifference){
@@ -249,20 +256,20 @@ int calculateCentroids(ppmImage *image,pxColours *centroids, int k, double *tota
             for(j = 0; j < num_of_data_points; ++j){
                 image->centr[j] = 0;                                                // only 1 centr exists
                 image->dist[j] = calcDpDistance(image->colour[j], centroids[i]);    // calc dist to the only centr
-                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                // calc total dist for the first centr
+                totalDistPerNumOfCentroids[k - MIN_K] += image->dist[j];                // calc total dist for the first centr
             }
 
         } else{
         //  every following centr
-            nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - 2]);    // calculates next centr based of distances between DPs and existing centroids
+            nextCentrIndex = getNextCentr(image, totalDistPerNumOfCentroids[k - MIN_K]);    // calculates next centr based of distances between DPs and existing centroids
             centroids[i] = image->colour[nextCentrIndex];                               // assigns value to new centr
-            totalDistPerNumOfCentroids[k - 2] = 0;                                      // calc total dist with the newest centr
+            totalDistPerNumOfCentroids[k - MIN_K] = 0;                                      // calc total dist with the newest centr
 
         //  reassigning data points to new closest centroid
             for(j = 0; j < num_of_data_points; ++j){
                 image->centr[j] = assignCentr(image->colour[j], centroids, k);                      // reassigns centr to DPs so that each DP is assigned the centr it is closest to
                 image->dist[j] = calcDpDistance(image->colour[j], centroids[ image->centr[j] ]);    // calc new distances to closest centr
-                totalDistPerNumOfCentroids[k - 2] += image->dist[j];                                // calc new total dist
+                totalDistPerNumOfCentroids[k - MIN_K] += image->dist[j];                                // calc new total dist
             }
         }
     }
