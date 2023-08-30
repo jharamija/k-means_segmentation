@@ -35,3 +35,49 @@ https://www.tutorialspoint.com/c-program-to-change-rgb-color-model-to-hsv-color-
 
     HSV to RGB
 https://saturncloud.io/blog/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0255-for-both/
+
+    about RGB nad HSV? (paper)
+https://projet.liris.cnrs.fr/imagine/pub/proceedings/ICME-2007/pdfs/0001123.pdf
+
+    Elbow method image
+https://www.analyticsvidhya.com/blog/2021/01/in-depth-intuition-of-k-means-clustering-algorithm-in-machine-learning/
+
+    optimizacija alg k-means - elbow and k-menas++
+https://www.kdnuggets.com/2017/03/naive-sharding-centroid-initialization-method.html
+
+    PMF rad
+https://repozitorij.pmf.unizg.hr/islandora/object/pmf%3A4641/datastream/PDF/view
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -90,7 +90,7 @@ int main(){
                 totalDistPerNumOfCentroids[k - MIN_K] += image->dist[i];
             }
 writeCentroids(image, centroids, NEW_IMG);
-
+printf("%f\n", totalDistPerNumOfCentroids[k - MIN_K]);
             free(centroids);
 
         }
@@ -175,13 +175,13 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
         explainedVariance[i] = ( ( totalDistPerNumOfCentroids[0] - totalDistPerNumOfCentroids[i] ) / totalDistPerNumOfCentroids[0] ) * 100;
     }
 
-//  finding elbow point, by calculating the biggest change in PVE
+//  finding elbow point by calculating the biggest change in PVE
     for(i = 1; i <= MAX_K - MIN_K; ++i){
 
         tmpDifference = explainedVariance[i] - explainedVariance[i - 1];
         if(tmpDifference > maxDifference){
             maxDifference = tmpDifference;
-            retval = i + 2;                     // converting index to num of clusters
+            retval = i + MIN_K;                     // converting index to num of clusters
         }
     }
 
@@ -193,11 +193,11 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
 int clustering(ppmImage *image, pxColours *centroids, int k){
 
     int i, j;
-    int sumR, sumG, sumB, count, convergence;
+    int sumR, sumG, sumB, count, convergence = 1;
     const int num_of_data_points = image->height * image->width;
 
 //  calc
-    for(int n = 0; n < 1000; ++n){
+    while(convergence != 0){                        // if there is no change conv doesn't increment -> loop breaks
         for(i = 0; i < num_of_data_points; ++i){
             image->centr[i] = assignCentr(image->colour[i], centroids, k);      // centroids are assigned as an int between 0 and k (NUM_OF_CLUSTERS), *centroids is an array
         }
@@ -221,15 +221,12 @@ int clustering(ppmImage *image, pxColours *centroids, int k){
             }
 
             if(centroids[i].r != ( sumR / count ) || centroids[i].g != ( sumG / count ) || centroids[i].b != ( sumB / count ))  // if there is no change conv increments -> loop breaks
-                convergence++;
+                convergence++;              // if it is != 0 it means there has been change
 
             centroids[i].r = sumR / count;
             centroids[i].g = sumG / count;
             centroids[i].b = sumB / count;
         }
-
-        if(convergence == 0)    // if there is no change conv increments -> loop breaks
-            break;
     }
 
     return 0;
