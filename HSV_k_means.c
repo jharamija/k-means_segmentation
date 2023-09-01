@@ -13,13 +13,25 @@
 // #define FILENAME "x0_5.ppm"
 // #define NEW_IMG "HSV_x0_5.ppm"
 
-#define FILENAME "road.ppm"
-#define NEW_IMG "HSV_road.ppm"
+// #define FILENAME "animalsGrayscale.ppm"
+// #define NEW_IMG "HSV_animalsGrayscale10.ppm"
+
+// #define FILENAME "house.ppm"
+// #define NEW_IMG "HSV_house10.ppm"
+
+// #define FILENAME "lionKingDetailed.ppm"
+// #define NEW_IMG "HSV_lionKingDetailed20.ppm"
+
+// #define FILENAME "lionKingSimple.ppm"
+// #define NEW_IMG "HSV_lionKingSimple10.ppm"
+
+#define FILENAME "nature.ppm"
+#define NEW_IMG "HSV_nature20.ppm"
 
 #define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
-#define MAX_K 10
+#define MAX_K 8
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 0                 // if K < 1 -> random k
+#define K 20                 // if K < 1 -> random k
 
 
 typedef struct {
@@ -182,6 +194,7 @@ int rgbToHsv(ppmImage *image, const int num_of_data_points){
     return 0;
 }
 
+// decAbs & decMod -> helping functions used to be able to use the absolute and modulo operators on decimal values
 double decAbs(double x){
 
     if(x < 0) x *= -1;
@@ -509,8 +522,8 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
 int KMeansPP(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids, char final){
 
 //  image is transformed into HSV at this point, centroidsHSV is being used for calculations, CentroidsRGB is only used at the end to print results in RGB format
-    pxHSV *centroidsHSV = (pxHSV*) malloc(MAX_K * sizeof(pxHSV));               // exists only within function
-    pxColours *centroidsRGB = (pxColours*) malloc(MAX_K * sizeof(pxColours));   // exists only within function
+    pxHSV *centroidsHSV = (pxHSV*) malloc(k * sizeof(pxHSV));               // exists only within function
+    pxColours *centroidsRGB = (pxColours*) malloc(k * sizeof(pxColours));   // exists only within function
 
     calculateCentroids(image, centroidsHSV, k, num_of_data_points, totalDistPerNumOfCentroids);
 
@@ -518,11 +531,11 @@ int KMeansPP(ppmImage *image, int k, const int num_of_data_points, double *total
 
     getWCSS(image, centroidsHSV, k, num_of_data_points, totalDistPerNumOfCentroids);
     
-    // if(final == 'y'){
+    if(final == 'y'){
         hsvToRgb(centroidsHSV, centroidsRGB, k);
 
         writeCentroids(image, centroidsRGB, NEW_IMG);
-    // }
+    }
 
     free(centroidsHSV);
     free(centroidsRGB);
@@ -555,7 +568,7 @@ int main(){
     if(K < 1){
     //  k-means++ (slightly more advanced way of choosing centroids)
         for(k = MIN_K; k <= MAX_K; ++k){
-            KMeansPP(image, k, num_of_data_points, totalDistPerNumOfCentroids, 'n');
+            KMeansPP(image, k, num_of_data_points, totalDistPerNumOfCentroids, 'n');printf("k = %d\n", k);
         }
 
         k = calcElbowPoint(image, totalDistPerNumOfCentroids, num_of_data_points);

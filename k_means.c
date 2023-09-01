@@ -13,8 +13,20 @@
 // #define FILENAME "x0_5.ppm"
 // #define NEW_IMG "RGB_x0_5.ppm"
 
-#define FILENAME "road.ppm"
-#define NEW_IMG "RGB_road.ppm"
+// #define FILENAME "animalsGrayscale.ppm"
+// #define NEW_IMG "RGB_animalsGrayscale10.ppm"
+
+// #define FILENAME "house.ppm"
+// #define NEW_IMG "RGB_house4.ppm"
+
+#define FILENAME "lionKingDetailed.ppm"
+#define NEW_IMG "RGB_lionKingDetailed20.ppm"
+
+// #define FILENAME "lionKingSimple.ppm"
+// #define NEW_IMG "RGB_lionKingSimple4.ppm"
+
+// #define FILENAME "nature.ppm"
+// #define NEW_IMG "RGB_nature20.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "test1.ppm"
@@ -24,7 +36,7 @@
 #define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 0                 // if K < 1 -> random k
+#define K 20                 // if K < 1 -> random k
 
 
 typedef struct {
@@ -89,8 +101,8 @@ int main(){
                 image->dist[i] = calcDpDistance(image->colour[i], centroids[ image->centr[i] ]);
                 totalDistPerNumOfCentroids[k - MIN_K] += image->dist[i];
             }
-writeCentroids(image, centroids, NEW_IMG);
-printf("%f\n", totalDistPerNumOfCentroids[k - MIN_K]);
+// writeCentroids(image, centroids, NEW_IMG);
+// printf("%f\n", totalDistPerNumOfCentroids[k - MIN_K]);
             free(centroids);
 
         }
@@ -146,7 +158,7 @@ int writeCentroids(ppmImage *image, pxColours *centroids, char* WRITEFILE){
 
 int KMeans(ppmImage *image, int k, const int num_of_data_points, double *totalDistPerNumOfCentroids){
 
-    pxColours *centroids = (pxColours*) malloc(MAX_K * sizeof(pxColours));      // exists only within function
+    pxColours *centroids = (pxColours*) malloc(k * sizeof(pxColours));      // exists only within function
 
 //  k-means++
     calculateCentroids(image, centroids, k, totalDistPerNumOfCentroids, num_of_data_points);
