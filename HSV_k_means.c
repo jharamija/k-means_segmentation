@@ -7,8 +7,11 @@
 
 #define LINESIZE 20
 
-// #define FILENAME "beach.ppm"
-// #define NEW_IMG "HSVtest.ppm"
+// #define FILENAME "minions.ppm"
+// #define NEW_IMG "HSV_minions10.ppm"
+
+// #define FILENAME "./images/beach.ppm"
+// #define NEW_IMG "./images/HSV_beach8.ppm"
 
 // #define FILENAME "x0_5.ppm"
 // #define NEW_IMG "HSV_x0_5.ppm"
@@ -17,21 +20,21 @@
 // #define NEW_IMG "HSV_animalsGrayscale10.ppm"
 
 // #define FILENAME "house.ppm"
-// #define NEW_IMG "HSV_house10.ppm"
+// #define NEW_IMG "HSV_house3.ppm"
 
 // #define FILENAME "lionKingDetailed.ppm"
 // #define NEW_IMG "HSV_lionKingDetailed20.ppm"
 
 // #define FILENAME "lionKingSimple.ppm"
-// #define NEW_IMG "HSV_lionKingSimple10.ppm"
+// #define NEW_IMG "HSV_lionKingSimple5.ppm"
 
 #define FILENAME "nature.ppm"
-#define NEW_IMG "HSV_nature20.ppm"
+#define NEW_IMG "HSV_nature50.ppm"
 
 #define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 8
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 20                 // if K < 1 -> random k
+#define K 50                 // if K < 1 -> random k
 
 
 typedef struct {

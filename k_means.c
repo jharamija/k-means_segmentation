@@ -7,8 +7,11 @@
 
 #define LINESIZE 20
 
-// #define FILENAME "beach.ppm"
-// #define NEW_IMG "test1.ppm"
+// #define FILENAME "minions.ppm"
+// #define NEW_IMG "RGB_minions10.ppm"
+
+// #define FILENAME "./images/beach.ppm"
+// #define NEW_IMG "./images/RGB_beach8.ppm"
 
 // #define FILENAME "x0_5.ppm"
 // #define NEW_IMG "RGB_x0_5.ppm"
@@ -17,16 +20,16 @@
 // #define NEW_IMG "RGB_animalsGrayscale10.ppm"
 
 // #define FILENAME "house.ppm"
-// #define NEW_IMG "RGB_house4.ppm"
+// #define NEW_IMG "RGB_house3.ppm"
 
-#define FILENAME "lionKingDetailed.ppm"
-#define NEW_IMG "RGB_lionKingDetailed20.ppm"
+// #define FILENAME "lionKingDetailed.ppm"
+// #define NEW_IMG "RGB_lionKingDetailed20.ppm"
 
 // #define FILENAME "lionKingSimple.ppm"
-// #define NEW_IMG "RGB_lionKingSimple4.ppm"
+// #define NEW_IMG "RGB_lionKingSimple5.ppm"
 
-// #define FILENAME "nature.ppm"
-// #define NEW_IMG "RGB_nature20.ppm"
+#define FILENAME "nature.ppm"
+#define NEW_IMG "RGB_nature50.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "test1.ppm"
@@ -36,7 +39,7 @@
 #define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 20                 // if K < 1 -> random k
+#define K 50               // if K < 1 -> random k
 
 
 typedef struct {
