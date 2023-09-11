@@ -28,7 +28,7 @@
 // #define FILENAME "lionKingSimple.ppm"
 // #define NEW_IMG "RGB_lionKingSimple5.ppm"
 
-#define FILENAME "nature.ppm"
+#define FILENAME "./images/beach.ppm"
 #define NEW_IMG "RGB_nature50.ppm"
 
 // #define FILENAME "img.ppm"
@@ -39,7 +39,7 @@
 #define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 50               // if K < 1 -> random k
+#define K 3               // if K < 1 -> random k
 
 
 typedef struct {
@@ -207,7 +207,7 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
 
 int clustering(ppmImage *image, pxColours *centroids, int k){
 
-    int i, j;
+    int i, j, m=0;
     int sumR, sumG, sumB, count, convergence = 1;
     const int num_of_data_points = image->height * image->width;
 
@@ -241,6 +241,12 @@ int clustering(ppmImage *image, pxColours *centroids, int k){
             centroids[i].r = sumR / count;
             centroids[i].g = sumG / count;
             centroids[i].b = sumB / count;
+
+            m++;
+            char buf[12];
+            snprintf(buf, 12, "beachTest%d", m);
+
+            writeCentroids(image, centroids, buf);
         }
     }
 
