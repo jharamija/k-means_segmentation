@@ -207,7 +207,7 @@ int calcElbowPoint(ppmImage *image, double *totalDistPerNumOfCentroids, const in
 
 int clustering(ppmImage *image, pxColours *centroids, int k){
 
-    int i, j, m=0;
+    int i, j;//, m=0;
     int sumR, sumG, sumB, count, convergence = 1;
     const int num_of_data_points = image->height * image->width;
 
@@ -242,11 +242,11 @@ int clustering(ppmImage *image, pxColours *centroids, int k){
             centroids[i].g = sumG / count;
             centroids[i].b = sumB / count;
 
-            m++;
-            char buf[12];
-            snprintf(buf, 12, "beachTest%d", m);
+            // m++;
+            // char buf[12];
+            // snprintf(buf, 12, "beachTest%d", m);
 
-            writeCentroids(image, centroids, buf);
+            // writeCentroids(image, centroids, buf);
         }
     }
 
