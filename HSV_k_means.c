@@ -28,13 +28,13 @@
 // #define FILENAME "lionKingSimple.ppm"
 // #define NEW_IMG "HSV_lionKingSimple5.ppm"
 
-#define FILENAME "nature.ppm"
-#define NEW_IMG "HSV_nature50.ppm"
+#define FILENAME "./images/beach.ppm"
+#define NEW_IMG "HSV_beachTest.ppm"
 
 #define MIN_K 2     // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 8
 #define FIRST_CENTR -1      // if == -1 -> random
-#define K 50                 // if K < 1 -> random k
+#define K 10                 // if K < 1 -> random k
 
 
 typedef struct {

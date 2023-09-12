@@ -29,14 +29,14 @@
 // #define NEW_IMG "RGB_lionKingSimple5.ppm"
 
 #define FILENAME "./images/beach.ppm"
-#define NEW_IMG "RGB_nature50.ppm"
+#define NEW_IMG "RGB_beachTest.ppm"
 
 // #define FILENAME "img.ppm"
 // #define NEW_IMG "test1.ppm"
 // #define CENTR_TEST_IMG1 "imgOut1.ppm"
 // #define CENTR_TEST_IMG2 "imgOut2.ppm"
 
-#define MIN_K 2             // starts at 2 because it's the smallest number of centroids that makes sense
+#define MIN_K 1             // starts at 2 because it's the smallest number of centroids that makes sense
 #define MAX_K 10
 #define FIRST_CENTR -1      // if == -1 -> random
 #define K 3               // if K < 1 -> random k
